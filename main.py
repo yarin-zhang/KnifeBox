@@ -9,8 +9,11 @@ from venv import EnvBuilder
 
 app = typer.Typer()
 
-# 检查 pip 是否已经在虚拟环境中可用
+
 def check_pip(env_dir: str):
+    '''
+    检查 pip 是否已经在虚拟环境中可用
+    '''
     pip_path = os.path.join(env_dir, "bin", "pip")
     try:
         subprocess.check_output([pip_path, "--version"])
@@ -18,8 +21,11 @@ def check_pip(env_dir: str):
     except FileNotFoundError:
         return False
 
-# 创建虚拟环境并安装依赖
+
 def setup_env(script_dir: str):
+    '''
+    创建虚拟环境并安装依赖
+    '''
     env_dir = os.path.join(script_dir, ".venv")
     if not os.path.exists(env_dir):
         builder = EnvBuilder(with_pip=True)  # 让 venv 自动安装 pip
@@ -40,14 +46,20 @@ def setup_env(script_dir: str):
         requirements_file = os.path.join(script_dir, "requirements.txt")
         if os.path.exists(requirements_file):
             try:
-                subprocess.run([pip_path, "install", "-r", requirements_file], check=True)
+                subprocess.run([pip_path, "install", "-r",
+                               requirements_file], check=True)
             except subprocess.CalledProcessError as e:
-                print(f"Error installing dependencies for script {script_dir}: {e}")
+                print(
+                    f"Error installing dependencies for script {script_dir}: {e}")
 
-# 在应用启动时，读取脚本目录并安装必要的依赖
+
 @app.callback()
 def startup_event():
-    script_dirs = [d for d in os.listdir("./data") if os.path.isdir(os.path.join("./data", d))]
+    '''
+    在应用启动时，读取脚本目录并安装必要的依赖
+    '''
+    script_dirs = [d for d in os.listdir(
+        "./data") if os.path.isdir(os.path.join("./data", d))]
 
     # 为每个脚本目录创建虚拟环境并安装必要的依赖
     for script_dir in script_dirs:
@@ -65,16 +77,24 @@ def startup_event():
                     "check_sha_for_updates": True
                 }, f)
 
-# 添加命令，让用户可以通过命令行来列出所有脚本
+
 @app.command()
 def list_scripts():
+    '''
+    添加命令，让用户可以通过命令行来列出所有脚本
+    '''
     # 读取 ./data 目录下的所有目录
-    script_dirs = [d for d in os.listdir("./data") if os.path.isdir(os.path.join("./data", d))]
+    script_dirs = [d for d in os.listdir(
+        "./data") if os.path.isdir(os.path.join("./data", d))]
     typer.echo(f"Scripts: {script_dirs}")
 
-# 添加命令，让用户可以通过命令行来运行一个脚本
+
 @app.command()
 def run_script(script_name: str, script_input: Optional[str] = None):
+    '''
+    添加命令，让用户可以通过命令行来运行一个脚本
+    '''
+
     # 运行脚本
     script_dir = os.path.join("./data", script_name)
     env_dir = os.path.join(script_dir, ".venv")
@@ -82,9 +102,10 @@ def run_script(script_name: str, script_input: Optional[str] = None):
     if script_input:
         command.append(script_input)
     result = subprocess.run(command, capture_output=True, text=True)
-    
+
     # 输出结果
     typer.echo(result.stdout)
+
 
 if __name__ == "__main__":
     app()
